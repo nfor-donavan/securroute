@@ -1,0 +1,4 @@
+{"expo":{"name":"SecurRoute","slug":"securroute","version":"1.0.0","icon":"./assets/logo.png","userInterfaceStyle":"automatic",
+"splash":{"image":"./assets/logo.png","resizeMode":"contain","backgroundColor":"#ffffff"},
+"plugins":[["expo-camera",{"cameraPermission":"SecurRoute needs the camera to scan QR codes and documents."}]],
+"android":{"package":"com.securroute.app","permissions":["CAMERA"]},"ios":{"bundleIdentifier":"com.securroute.app"}}}
