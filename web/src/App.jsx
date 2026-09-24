@@ -20,10 +20,13 @@ export default function App(){
   <button className="pill" onClick={()=>setLang(lang==='en'?'fr':'en')}>{lang==='en'?'FR':'EN'}</button>
   <button className="pill" aria-label="theme" onClick={()=>setDark(!dark)}>{dark?'☀️':'🌙'}</button>
   {tok&&<button className="pill" onClick={out}>{t.out}</button>}</div>;
- if(!tok)return<div className="login">{Bar}<div className="lg"><img src="/logo.png" className="big" alt="SecurRoute"/>
-  <form onSubmit={login} className="card"><h2>{t.login}</h2><input placeholder={t.email} value={f.email} onChange={e=>setF({...f,email:e.target.value})}/>
-  <input type="password" placeholder={t.pw} value={f.password} onChange={e=>setF({...f,password:e.target.value})}/>{err&&<p className="err">{err}</p>}
-  <button className="btn">{t.login}</button></form></div></div>;
+ if(!tok)return<div className="auth"><aside className="brand"><div className="bc"><div className="logobox"><img src="/logo.png" alt="SecurRoute"/></div><div><h1>SecurRoute</h1><p className="tg">{t.tag}</p></div>
+  <ul>{t.pts.map(x=><li key={x}>✓ {x}</li>)}</ul></div><small>© 2026 SecurRoute</small></aside>
+  <section className="fw"><div className="ctl"><button className="pill" onClick={()=>setLang(lang==='en'?'fr':'en')}>{lang==='en'?'FR':'EN'}</button><button className="pill" aria-label="theme" onClick={()=>setDark(!dark)}>{dark?'☀️':'🌙'}</button></div>
+  <form onSubmit={login} className="fcard"><h2>{t.welcome}</h2><p className="sub2">{t.signsub}</p>
+  <label>{t.email}<input type="email" autoComplete="username" value={f.email} onChange={e=>setF({...f,email:e.target.value})}/></label>
+  <label>{t.pw}<input type="password" autoComplete="current-password" value={f.password} onChange={e=>setF({...f,password:e.target.value})}/></label>
+  {err&&<p className="err">{err}</p>}<button className="btn">{t.login}</button></form></section></div>;
  if(!stats)return<div>{Bar}</div>;
  const g=k=>stats.byStatus.find(x=>x._id===k)?.n||0,mx=Math.max(...stats.daily.map(d=>d.n)),fm=Math.max(1,...stats.flags.map(x=>x.n));
  const kp=[[t.total,stats.total,''],[t.valid,g('valid'),'ok'],[t.warn,g('warning'),'wa'],[t.fraud,g('fraud'),'fr']];
