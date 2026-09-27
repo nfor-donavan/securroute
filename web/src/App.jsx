@@ -1,10 +1,13 @@
-import React,{useEffect,useState} from 'react';import {T} from './i18n.js';import {Checks,Agents,Registry,MapPage,Heat,Report} from './Pages.jsx';
+import React,{useEffect,useState} from 'react';import {T} from './i18n.js';import {Checks,Agents,Registry,MapPage,Heat,Report,AuditPage} from './Pages.jsx';
 const API=import.meta.env.VITE_API_URL;
+const resetTokenFromUrl=()=>new URLSearchParams(window.location.search).get('reset');
 const Count=({v})=>{const[n,setN]=useState(0);useEffect(()=>{let s=0,id=setInterval(()=>{s+=Math.ceil(v/40)||1;if(s>=v){s=v;clearInterval(id)}setN(s)},20);return()=>clearInterval(id)},[v]);return n.toLocaleString()};
 export default function App(){
  const[lang,setLang]=useState(localStorage.lang||'en'),[dark,setDark]=useState(localStorage.dark?localStorage.dark==='1':matchMedia('(prefers-color-scheme:dark)').matches);
  const[tok,setTok]=useState(localStorage.tok||''),[stats,setStats]=useState(null),[checks,setChecks]=useState([]),[err,setErr]=useState(''),[f,setF]=useState({email:'',password:''});
  const t=T[lang],[page,setPage]=useState(0),[feed,setFeed]=useState([]),[alert,setAlert]=useState(null);
+ const[view,setView]=useState(resetTokenFromUrl()?'reset':'login'),[fEmail,setFEmail]=useState(''),[sent,setSent]=useState(false),
+  [rp,setRp]=useState({p1:'',p2:''}),[rMsg,setRMsg]=useState(''),[rOk,setROk]=useState(false),[busy2,setBusy2]=useState(false);
  useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';localStorage.dark=dark?1:0},[dark]);
  useEffect(()=>{localStorage.lang=lang},[lang]);
  const authFetch=async(path)=>{const r=await fetch(API+path,{headers:{Authorization:'Bearer '+tok}});
@@ -19,25 +22,52 @@ export default function App(){
   return()=>{live=false}},[tok]);
  const login=async e=>{e.preventDefault();setErr('');try{const r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(f)});
   const d=await r.json();if(!r.ok)throw Error(d.error);localStorage.tok=d.token;setTok(d.token)}catch(x){setErr(x.message||'Error')}};
- const out=()=>{localStorage.tok='';setTok('');setStats(null)};
+ const out=()=>{localStorage.tok='';setTok('');setStats(null);setChecks([]);setFeed([]);setAlert(null);setView('login')};
+ const sendReset=async e=>{e.preventDefault();setBusy2(true);
+  try{await fetch(API+'/api/auth/forgot',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:fEmail})})}catch{}
+  setBusy2(false);setSent(true)};
+ const doReset=async e=>{e.preventDefault();setRMsg('');
+  if(rp.p1!==rp.p2)return setRMsg(t.mismatch);
+  if(rp.p1.length<6)return setRMsg(t.short);
+  setBusy2(true);
+  try{const r=await fetch(API+'/api/auth/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:resetTokenFromUrl(),password:rp.p1})});
+   const d=await r.json();if(!r.ok)throw Error(d.error);setROk(true);window.history.replaceState({},'','/')}catch(x){setRMsg(x.message||t.resetBad)}
+  setBusy2(false)};
  const Bar=<div className="top"><img src="/logo.png" className="mark" alt=""/><b>SecurRoute</b><span className="sp"/>
   <button className="pill" onClick={()=>setLang(lang==='en'?'fr':'en')}>{lang==='en'?'FR':'EN'}</button>
   <button className="pill" aria-label="theme" onClick={()=>setDark(!dark)}>{dark?'☀️':'🌙'}</button>
   {tok&&<button className="pill" onClick={out}>{t.out}</button>}</div>;
- if(!tok)return<div className="auth"><aside className="brand"><div className="bc"><div className="logobox"><img src="/logo.png" alt="SecurRoute"/></div><div><h1>SecurRoute</h1><p className="tg">{t.tag}</p></div>
+ const Toggles=<div className="ctl"><button className="pill" onClick={()=>setLang(lang==='en'?'fr':'en')}>{lang==='en'?'FR':'EN'}</button><button className="pill" aria-label="theme" onClick={()=>setDark(!dark)}>{dark?'☀️':'🌙'}</button></div>;
+ const Shell=inner=><div className="auth"><aside className="brand"><div className="bc"><div className="logobox"><img src="/logo.png" alt="SecurRoute"/></div><div><h1>SecurRoute</h1><p className="tg">{t.tag}</p></div>
   <ul>{t.pts.map(x=><li key={x}>✓ {x}</li>)}</ul></div><small>© 2026 SecurRoute</small></aside>
-  <section className="fw"><div className="ctl"><button className="pill" onClick={()=>setLang(lang==='en'?'fr':'en')}>{lang==='en'?'FR':'EN'}</button><button className="pill" aria-label="theme" onClick={()=>setDark(!dark)}>{dark?'☀️':'🌙'}</button></div>
+  <section className="fw">{Toggles}{inner}</section></div>;
+ if(!tok&&view==='reset')return Shell(
+  rOk?<div className="fcard"><h2>{t.sentTitle}</h2><p className="sub2">{t.resetOk}</p><button className="btn" onClick={()=>{setView('login');setROk(false)}}>{t.backLogin}</button></div>
+  :!resetTokenFromUrl()?<div className="fcard"><h2>{t.forgotTitle}</h2><p className="sub2">{t.resetBad}</p><button className="btn" onClick={()=>setView('login')}>{t.backLogin}</button></div>
+  :<form onSubmit={doReset} className="fcard"><h2>{t.resetTitle}</h2><p className="sub2">{t.resetSub}</p>
+   <label>{t.newPw}<input type="password" value={rp.p1} onChange={e=>setRp({...rp,p1:e.target.value})}/></label>
+   <label>{t.confirmPw}<input type="password" value={rp.p2} onChange={e=>setRp({...rp,p2:e.target.value})}/></label>
+   {rMsg&&<p className="err">{rMsg}</p>}<button className="btn" disabled={busy2}>{t.resetBtn}</button>
+   <button type="button" className="ghost" onClick={()=>{window.history.replaceState({},'','/');setView('login')}}>{t.backLogin}</button></form>);
+ if(!tok&&view==='forgot')return Shell(
+  sent?<div className="fcard"><h2>{t.sentTitle}</h2><p className="sub2">{t.sentMsg}</p><button className="btn" onClick={()=>{setView('login');setSent(false)}}>{t.backLogin}</button></div>
+  :<form onSubmit={sendReset} className="fcard"><h2>{t.forgotTitle}</h2><p className="sub2">{t.forgotSub}</p>
+   <label>{t.email}<input type="email" autoComplete="username" value={fEmail} onChange={e=>setFEmail(e.target.value)}/></label>
+   <button className="btn" disabled={busy2}>{t.sendLink}</button>
+   <button type="button" className="ghost" onClick={()=>setView('login')}>{t.backLogin}</button></form>);
+ if(!tok)return Shell(
   <form onSubmit={login} className="fcard"><h2>{t.welcome}</h2><p className="sub2">{t.signsub}</p>
   <label>{t.email}<input type="email" autoComplete="username" value={f.email} onChange={e=>setF({...f,email:e.target.value})}/></label>
   <label>{t.pw}<input type="password" autoComplete="current-password" value={f.password} onChange={e=>setF({...f,password:e.target.value})}/></label>
-  {err&&<p className="err">{err}</p>}<button className="btn">{t.login}</button></form></section></div>;
+  {err&&<p className="err">{err}</p>}<button className="btn">{t.login}</button>
+  <button type="button" className="ghost" onClick={()=>setView('forgot')}>{t.forgot}</button></form>);
  if(!stats)return<div>{Bar}<main><div className="card" style={{textAlign:'center',padding:'60px 20px',color:'var(--mu)'}}>{lang==='fr'?'Chargement du tableau de bord…':'Loading dashboard…'}</div></main></div>;
  const byStatus=stats.byStatus||[],daily=stats.daily?.length?stats.daily:[{_id:'-',n:1,fraud:0}],flags=stats.flags||[],cps=stats.cps||[];
  const g=k=>byStatus.find(x=>x._id===k)?.n||0,mx=Math.max(1,...daily.map(d=>d.n)),fm=Math.max(1,...flags.map(x=>x.n));
  const kp=[[t.total,stats.total,''],[t.valid,g('valid'),'ok'],[t.warn,g('warning'),'wa'],[t.fraud,g('fraud'),'fr']];
  const C=2*Math.PI*42,rate=stats.total?g('fraud')/stats.total:0;
  return<div>{Bar}<nav className="tabs">{t.nav.map((n,i)=><button key={n} className={page===i?'on':''} onClick={()=>setPage(i)}>{n}</button>)}</nav>{alert&&<div className="alert" role="alert" onClick={()=>setAlert(null)}>🚨 {t.f[alert.flags?.[0]]||t.s.fraud} · <b>{alert.plate}</b> · {alert.checkpoint}</div>}
-  {page===1?<main><Checks t={t} checks={checks}/></main>:page===2?<main><Registry t={t} tok={tok}/></main>:page===3?<main><Heat t={t} cps={stats.cps}/><MapPage t={t} cps={stats.cps}/></main>:page===4?<main><Report t={t} stats={stats}/></main>:page===5?<main><Agents t={t} tok={tok}/></main>:<main>
+  {page===1?<main><Checks t={t} checks={checks}/></main>:page===2?<main><Registry t={t} tok={tok}/></main>:page===3?<main><Heat t={t} cps={stats.cps}/><MapPage t={t} cps={stats.cps}/></main>:page===4?<main><Report t={t} stats={stats}/></main>:page===5?<main><Agents t={t} tok={tok}/></main>:page===6?<main><AuditPage t={t} tok={tok}/></main>:<main>
   <section className="hero"><div><span className="live"><i/>{t.live}</span><h1>{t.hero}</h1><p>{t.sub}</p></div>
    <svg viewBox="0 0 100 100" className="ring"><circle cx="50" cy="50" r="42" className="rb"/><circle cx="50" cy="50" r="42" className="rf" strokeDasharray={`${C*rate} ${C}`} transform="rotate(-90 50 50)"/>
     <text x="50" y="52" textAnchor="middle" className="rt">{(rate*100).toFixed(1)}%</text><text x="50" y="66" textAnchor="middle" className="rs">{t.rate}</text></svg></section>

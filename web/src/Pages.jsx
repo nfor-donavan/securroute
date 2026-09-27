@@ -60,3 +60,9 @@ export function Heat({t,cps}){const mx=Math.max(1,...(cps||[]).map(c=>c.n));
    return<g key={c._id}><circle cx={X(lo)} cy={Y(la)} r={10+26*Math.sqrt(c.n/mx)} fill={col} opacity=".28"><animate attributeName="opacity" values=".15;.4;.15" dur="2.4s" repeatCount="indefinite"/></circle>
    <circle cx={X(lo)} cy={Y(la)} r="5" fill={col}/><text x={X(lo)+(lo>12?-8:14)} y={Y(la)+4} textAnchor={lo>12?'end':'start'} fontSize="10" fill="var(--tx)">{c._id.split(' – ')[0]} · {(r*100).toFixed(0)}%</text></g>})}</svg>
   <small style={{color:'var(--mu)'}}>{t.heatNote}</small></div>}
+export function AuditPage({t,tok}){
+ const[rows,setRows]=useState([]);
+ useEffect(()=>{fetch(API+'/api/audit',{headers:{Authorization:'Bearer '+tok}}).then(r=>r.json()).then(d=>setRows(Array.isArray(d)?d:[])).catch(()=>{})},[tok]);
+ return<div className="card"><div className="scroll"><table><thead><tr><th>{t.when}</th><th>{t.action}</th><th>{t.actor}</th><th>{t.target}</th></tr></thead><tbody>
+  {rows.map(r=><tr key={r._id}><td>{new Date(r.at).toLocaleString()}</td><td>{t.a[r.action]||r.action}</td><td>{r.actorName||r.actorEmail||'—'}</td><td>{r.target||'—'}</td></tr>)}</tbody></table></div>
+  {!rows.length&&<p style={{color:'var(--mu)'}}>{t.empty}</p>}</div>}

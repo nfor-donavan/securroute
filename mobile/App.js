@@ -3,9 +3,11 @@ import {View,Text,TextInput,TouchableOpacity,Image,ScrollView,useColorScheme,Sty
 import {CameraView,useCameraPermissions} from 'expo-camera';import AsyncStorage from '@react-native-async-storage/async-storage';import NetInfo from '@react-native-community/netinfo';
 import TextRecognition from '@react-native-ml-kit/text-recognition';import {API,CHECKPOINTS} from './config';
 const T={en:{scan:'Scan',hist:'History',go:'Verify',tag:'Verify • Inspect • Keep Roads Safe',bad:'Sign-in failed. Check your details or connection.',owner:'Owner',make:'Vehicle',ins:'Insurance',insp:'Inspection',seen:'Previous checks',qr:'Scan QR code',off:'Offline – using cache',on:'Online',pend:'pending sync',login:'Sign in',email:'Email',pw:'Password',
- s:{valid:'Valid',warning:'Warning',fraud:'Fraud'},f:{stolen:'Stolen vehicle',insurance_expired:'Insurance expired',inspection_expired:'Inspection expired',document_tampered:'Tampered document',possible_clone:'Possible cloned plate',not_registered:'Not registered'},ocr:'Or type the plate',cap:'Capture',mode:'Scan plate / document (OCR)',none:'No plate found. Retake the photo.'},
+ s:{valid:'Valid',warning:'Warning',fraud:'Fraud'},f:{stolen:'Stolen vehicle',insurance_expired:'Insurance expired',inspection_expired:'Inspection expired',document_tampered:'Tampered document',possible_clone:'Possible cloned plate',not_registered:'Not registered'},ocr:'Or type the plate',cap:'Capture',mode:'Scan plate / document (OCR)',none:'No plate found. Retake the photo.',
+ sync:'Sync now',last:'Registry updated',never:'not yet synced',syncing:'Syncing…'},
 fr:{scan:'Scanner',hist:'Historique',go:'Vérifier',tag:'Vérifier • Inspecter • Sécuriser les routes',bad:'Échec de connexion. Vérifiez vos informations ou la connexion.',owner:'Propriétaire',make:'Véhicule',ins:'Assurance',insp:'Visite technique',seen:'Contrôles précédents',qr:'Scanner le QR code',off:'Hors ligne – cache utilisé',on:'En ligne',pend:'en attente de synchro',login:'Connexion',email:'E-mail',pw:'Mot de passe',
- s:{valid:'Valide',warning:'Alerte',fraud:'Fraude'},f:{stolen:'Véhicule volé',insurance_expired:'Assurance expirée',inspection_expired:'Visite technique expirée',document_tampered:'Document falsifié',possible_clone:'Plaque clonée possible',not_registered:'Non immatriculé'},ocr:'Ou saisir la plaque',cap:'Capturer',mode:'Scanner plaque / document (OCR)',none:'Aucune plaque trouvée. Reprenez la photo.'}};
+ s:{valid:'Valide',warning:'Alerte',fraud:'Fraude'},f:{stolen:'Véhicule volé',insurance_expired:'Assurance expirée',inspection_expired:'Visite technique expirée',document_tampered:'Document falsifié',possible_clone:'Plaque clonée possible',not_registered:'Non immatriculé'},ocr:'Ou saisir la plaque',cap:'Capturer',mode:'Scanner plaque / document (OCR)',none:'Aucune plaque trouvée. Reprenez la photo.',
+ sync:'Synchroniser',last:'Registre mis à jour',never:'pas encore synchronisé',syncing:'Synchronisation…'}};
 const norm=p=>String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const dd=d=>d?new Date(d).toLocaleDateString():'—';
 const COL={valid:'#16a34a',warning:'#f59e0b',fraud:'#dc2626'};
@@ -16,13 +18,20 @@ export default function App(){
  const dark=useColorScheme()==='dark',[manual,setManual]=useState(null),[lang,setLang]=useState('fr');const isDark=manual??dark;
  const c=isDark?{bg:'#060d1f',card:'#0d1a38',tx:'#eaf0ff',mu:'#93a4c8',bd:'#1b2a52',pr:'#5b8cff'}:{bg:'#f3f6fb',card:'#fff',tx:'#0b1f4d',mu:'#5b6b8c',bd:'#e2e8f3',pr:'#0b2a6f'};
  const ref=useRef(null),lock=useRef(false),[err,setErr]=useState(''),[mode,setMode]=useState('qr'),[cp,setCp]=useState(CHECKPOINTS[0]),t=T[lang],[tab,setTab]=useState('scan'),[tok,setTok]=useState(null),[f,setF]=useState({email:'',password:''}),[plate,setPlate]=useState(''),[res,setRes]=useState(null),
- [cache,setCache]=useState([]),[queue,setQueue]=useState([]),[hist,setHist]=useState([]),[online,setOnline]=useState(true),[cam,setCam]=useState(false),[busy,setBusy]=useState(false),[perm,ask]=useCameraPermissions();
+ [cache,setCache]=useState([]),[queue,setQueue]=useState([]),[hist,setHist]=useState([]),[online,setOnline]=useState(true),[cam,setCam]=useState(false),[busy,setBusy]=useState(false),[perm,ask]=useCameraPermissions(),
+ [lastSync,setLastSync]=useState(null),[syncing,setSyncing]=useState(false);
  const H=()=>({'Content-Type':'application/json',Authorization:'Bearer '+tok});
- useEffect(()=>{(async()=>{setCache(JSON.parse(await AsyncStorage.getItem('cache')||'[]'));setQueue(JSON.parse(await AsyncStorage.getItem('queue')||'[]'));setHist(JSON.parse(await AsyncStorage.getItem('hist')||'[]'));setTok(await AsyncStorage.getItem('tok'))})();
+ useEffect(()=>{(async()=>{setCache(JSON.parse(await AsyncStorage.getItem('cache')||'[]'));setQueue(JSON.parse(await AsyncStorage.getItem('queue')||'[]'));setHist(JSON.parse(await AsyncStorage.getItem('hist')||'[]'));setLastSync(await AsyncStorage.getItem('lastSync'));setTok(await AsyncStorage.getItem('tok'))})();
   return NetInfo.addEventListener(s=>setOnline(!!s.isConnected))},[]);
- useEffect(()=>{if(tok&&online){fetch(API+'/api/vehicles/cache',{headers:H()}).then(r=>r.json()).then(d=>{if(Array.isArray(d)){setCache(d);AsyncStorage.setItem('cache',JSON.stringify(d))}}).catch(()=>{});sync()}},[online,tok]);
+ const refreshCache=async()=>{try{const r=await fetch(API+'/api/vehicles/cache',{headers:H()});const d=await r.json();
+  if(Array.isArray(d)){setCache(d);AsyncStorage.setItem('cache',JSON.stringify(d));const now=new Date().toISOString();setLastSync(now);AsyncStorage.setItem('lastSync',now)}}catch{}};
+ useEffect(()=>{if(tok&&online){refreshCache();sync()}},[online,tok]);
+ // Keep retrying the offline queue every 20s while a connection is up, so an agent never has to think about it.
+ useEffect(()=>{if(!tok||!online)return;const id=setInterval(()=>{sync();refreshCache()},20000);return()=>clearInterval(id)},[tok,online,queue]);
  const save=(k,v,set)=>{set(v);AsyncStorage.setItem(k,JSON.stringify(v))};
- async function sync(q=queue){if(!q.length)return;try{const r=await fetch(API+'/api/verify/sync',{method:'POST',headers:H(),body:JSON.stringify({checks:q})});if(r.ok)save('queue',[],setQueue)}catch{}}
+ async function sync(q=queue){if(!q.length)return;setSyncing(true);
+  try{const r=await fetch(API+'/api/verify/sync',{method:'POST',headers:H(),body:JSON.stringify({checks:q})});if(r.ok)save('queue',[],setQueue)}catch{}
+  setSyncing(false)}
  async function login(){const r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(f)}).catch(()=>null);const d=r&&await r.json();if(d?.token){await AsyncStorage.setItem('tok',d.token);setTok(d.token);setErr('')}else setErr(t.bad)}
  async function verify(p){if(!norm(p)||lock.current)return;lock.current=true;setBusy(true);const at=new Date().toISOString();let r;
   try{if(!online)throw 0;const x=await fetch(API+'/api/verify',{method:'POST',headers:H(),body:JSON.stringify({plate:p,checkpoint:cp,at})});r=await x.json();if(!x.ok)throw 0}
@@ -46,7 +55,9 @@ export default function App(){
    {!!err&&<Text style={{color:'#dc2626',marginBottom:10}}>{err}</Text>}
    <TouchableOpacity style={st.btn} onPress={login}><Text style={{color:'#fff',fontWeight:'700',fontSize:16}}>{t.login}</Text></TouchableOpacity></View></ScrollView>;
  return<View style={{flex:1,backgroundColor:c.bg}}>{Top}
-  <View style={{padding:8,backgroundColor:online?'#16a34a':'#f59e0b'}}><Text style={{color:'#fff',textAlign:'center',fontWeight:'600'}}>{online?t.on:t.off}{queue.length?` · ${queue.length} ${t.pend}`:''}</Text></View>
+  <View style={{flexDirection:'row',alignItems:'center',padding:8,paddingLeft:14,backgroundColor:online?'#16a34a':'#f59e0b'}}>
+   <Text style={{flex:1,color:'#fff',fontWeight:'600'}}>{online?t.on:t.off}{queue.length?` · ${queue.length} ${t.pend}`:''} · {t.last}: {lastSync?new Date(lastSync).toLocaleTimeString():t.never}</Text>
+   {online&&<TouchableOpacity onPress={()=>{sync();refreshCache()}} disabled={syncing} style={{paddingHorizontal:10,paddingVertical:6,borderRadius:99,backgroundColor:'#ffffff33'}}><Text style={{color:'#fff',fontWeight:'700',fontSize:12}}>{syncing?t.syncing:t.sync}</Text></TouchableOpacity>}</View>
   <ScrollView contentContainerStyle={{padding:16}}>
   {tab==='scan'&&<ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom:14,flexGrow:0}}>{CHECKPOINTS.map(k=><TouchableOpacity key={k} onPress={()=>setCp(k)} style={{paddingVertical:8,paddingHorizontal:14,borderRadius:99,marginRight:8,backgroundColor:cp===k?c.pr:c.card,borderWidth:1,borderColor:c.bd}}><Text style={{color:cp===k?'#fff':c.tx,fontWeight:'600'}}>📍 {k}</Text></TouchableOpacity>)}</ScrollView>}
   {tab==='scan'?<>
