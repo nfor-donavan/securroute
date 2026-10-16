@@ -33,13 +33,13 @@ export default function App(){
   try{const r=await fetch(API+'/api/auth/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:resetTokenFromUrl(),password:rp.p1})});
    const d=await r.json();if(!r.ok)throw Error(d.error);setROk(true);window.history.replaceState({},'','/')}catch(x){setRMsg(x.message||t.resetBad)}
   setBusy2(false)};
- const Bar=<div className="top"><img src="/logo.png" className="mark" alt=""/><b>SecurRoute</b><span className="sp"/>
+ const Bar=<div className="top"><img src="/logo.png" className="mark" alt=""/><b>SecurRoute</b><span className="byline">{t.byNexus}</span><span className="sp"/>
   <button className="pill" onClick={()=>setLang(lang==='en'?'fr':'en')}>{lang==='en'?'FR':'EN'}</button>
   <button className="pill" aria-label="theme" onClick={()=>setDark(!dark)}>{dark?'☀️':'🌙'}</button>
   {tok&&<button className="pill" onClick={out}>{t.out}</button>}</div>;
  const Toggles=<div className="ctl"><button className="pill" onClick={()=>setLang(lang==='en'?'fr':'en')}>{lang==='en'?'FR':'EN'}</button><button className="pill" aria-label="theme" onClick={()=>setDark(!dark)}>{dark?'☀️':'🌙'}</button></div>;
- const Shell=inner=><div className="auth"><aside className="brand"><div className="bc"><div className="logobox"><img src="/logo.png" alt="SecurRoute"/></div><div><h1>SecurRoute</h1><p className="tg">{t.tag}</p></div>
-  <ul>{t.pts.map(x=><li key={x}>✓ {x}</li>)}</ul></div><small>© 2026 SecurRoute</small></aside>
+ const Shell=inner=><div className="auth"><aside className="brand"><div className="bc"><div className="logobox"><img src="/logo.png" alt="SecurRoute"/></div><div><h1>SecurRoute</h1><p className="tg">{t.tag}</p><p className="nxline">{t.byNexus}</p></div>
+  <ul>{t.pts.map(x=><li key={x}>✓ {x}</li>)}</ul></div><small className="nxfooter"><img src="/nexus-logo.png" alt="Nexus Tech Labs"/>{t.footer}</small></aside>
   <section className="fw">{Toggles}{inner}</section></div>;
  if(!tok&&view==='reset')return Shell(
   rOk?<div className="fcard"><h2>{t.sentTitle}</h2><p className="sub2">{t.resetOk}</p><button className="btn" onClick={()=>{setView('login');setROk(false)}}>{t.backLogin}</button></div>
@@ -61,7 +61,7 @@ export default function App(){
   <label>{t.pw}<input type="password" autoComplete="current-password" value={f.password} onChange={e=>setF({...f,password:e.target.value})}/></label>
   {err&&<p className="err">{err}</p>}<button className="btn">{t.login}</button>
   <button type="button" className="ghost" onClick={()=>setView('forgot')}>{t.forgot}</button></form>);
- if(!stats)return<div>{Bar}<main><div className="card" style={{textAlign:'center',padding:'60px 20px',color:'var(--mu)'}}>{lang==='fr'?'Chargement du tableau de bord…':'Loading dashboard…'}</div></main></div>;
+ if(!stats)return<div>{Bar}<main><div className="card" style={{textAlign:'center',padding:'60px 20px',color:'var(--mu)'}}>{lang==='fr'?'Chargement du tableau de bord…':'Loading dashboard…'}</div></main><footer className="appfoot"><img src="/nexus-logo.png" alt="Nexus Tech Labs"/><span>{t.footer}</span></footer></div>;
  const byStatus=stats.byStatus||[],daily=stats.daily?.length?stats.daily:[{_id:'-',n:1,fraud:0}],flags=stats.flags||[],cps=stats.cps||[];
  const g=k=>byStatus.find(x=>x._id===k)?.n||0,mx=Math.max(1,...daily.map(d=>d.n)),fm=Math.max(1,...flags.map(x=>x.n));
  const kp=[[t.total,stats.total,''],[t.valid,g('valid'),'ok'],[t.warn,g('warning'),'wa'],[t.fraud,g('fraud'),'fr']];
@@ -79,4 +79,4 @@ export default function App(){
    <div className="card"><h3>{t.cps}</h3>{cps.map(x=><div key={x._id} className="row"><span>{x._id}</span><em>{x.n.toLocaleString()}</em></div>)}</div></div>
   <div className="card"><h3>{t.checks}</h3><div className="scroll"><table><thead><tr><th>{t.plate}</th><th>{t.status}</th><th>{t.score}</th><th>{t.agent}</th><th>{t.time}</th></tr></thead>
    <tbody>{(checks||[]).map(c=><tr key={c._id}><td><b>{c.plate}</b></td><td><span className={'tag '+c.status}>{t.s[c.status]}</span></td><td>{c.score}</td><td>{c.agentName||c.agent?.name}</td><td>{new Date(c.at).toLocaleTimeString()}</td></tr>)}</tbody></table></div></div>
-  </main>}</div>}
+  </main>}<footer className="appfoot"><img src="/nexus-logo.png" alt="Nexus Tech Labs"/><span>{t.footer}</span></footer></div>}

@@ -4,10 +4,10 @@ import {CameraView,useCameraPermissions} from 'expo-camera';import AsyncStorage 
 import TextRecognition from '@react-native-ml-kit/text-recognition';import {API,CHECKPOINTS} from './config';
 const T={en:{scan:'Scan',hist:'History',go:'Verify',tag:'Verify • Inspect • Keep Roads Safe',bad:'Sign-in failed. Check your details or connection.',owner:'Owner',make:'Vehicle',ins:'Insurance',insp:'Inspection',seen:'Previous checks',qr:'Scan QR code',off:'Offline – using cache',on:'Online',pend:'pending sync',login:'Sign in',email:'Email',pw:'Password',
  s:{valid:'Valid',warning:'Warning',fraud:'Fraud'},f:{stolen:'Stolen vehicle',insurance_expired:'Insurance expired',inspection_expired:'Inspection expired',document_tampered:'Tampered document',possible_clone:'Possible cloned plate',not_registered:'Not registered'},ocr:'Or type the plate',cap:'Capture',mode:'Scan plate / document (OCR)',none:'No plate found. Retake the photo.',
- sync:'Sync now',last:'Registry updated',never:'not yet synced',syncing:'Syncing…'},
+ sync:'Sync now',last:'Registry updated',never:'not yet synced',syncing:'Syncing…',byNexus:'by Nexus Tech Labs',footer:'SecurRoute · Developed by Nexus Tech Labs'},
 fr:{scan:'Scanner',hist:'Historique',go:'Vérifier',tag:'Vérifier • Inspecter • Sécuriser les routes',bad:'Échec de connexion. Vérifiez vos informations ou la connexion.',owner:'Propriétaire',make:'Véhicule',ins:'Assurance',insp:'Visite technique',seen:'Contrôles précédents',qr:'Scanner le QR code',off:'Hors ligne – cache utilisé',on:'En ligne',pend:'en attente de synchro',login:'Connexion',email:'E-mail',pw:'Mot de passe',
  s:{valid:'Valide',warning:'Alerte',fraud:'Fraude'},f:{stolen:'Véhicule volé',insurance_expired:'Assurance expirée',inspection_expired:'Visite technique expirée',document_tampered:'Document falsifié',possible_clone:'Plaque clonée possible',not_registered:'Non immatriculé'},ocr:'Ou saisir la plaque',cap:'Capturer',mode:'Scanner plaque / document (OCR)',none:'Aucune plaque trouvée. Reprenez la photo.',
- sync:'Synchroniser',last:'Registre mis à jour',never:'pas encore synchronisé',syncing:'Synchronisation…'}};
+ sync:'Synchroniser',last:'Registre mis à jour',never:'pas encore synchronisé',syncing:'Synchronisation…',byNexus:'par Nexus Tech Labs',footer:'SecurRoute · Développé par Nexus Tech Labs'}};
 const norm=p=>String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const dd=d=>d?new Date(d).toLocaleDateString():'—';
 const COL={valid:'#16a34a',warning:'#f59e0b',fraud:'#dc2626'};
@@ -48,12 +48,13 @@ export default function App(){
   <View style={{backgroundColor:'#0b2a6f',paddingTop:Platform.OS==='ios'?60:26,paddingBottom:74,alignItems:'center',borderBottomLeftRadius:36,borderBottomRightRadius:36}}>
    <View style={{alignSelf:'flex-end',flexDirection:'row',gap:16,paddingRight:18,marginBottom:6}}><TouchableOpacity onPress={()=>setLang(lang==='en'?'fr':'en')}><Text style={{color:'#fff',fontWeight:'700'}}>{lang==='en'?'FR':'EN'}</Text></TouchableOpacity><TouchableOpacity onPress={()=>setManual(!isDark)}><Text style={{fontSize:18}}>{isDark?'☀️':'🌙'}</Text></TouchableOpacity></View>
    <View style={{width:92,height:92,borderRadius:26,backgroundColor:'#fff',alignItems:'center',justifyContent:'center'}}><Image source={require('./assets/logo.png')} style={{width:68,height:68}} resizeMode="contain"/></View>
-   <Text style={{color:'#fff',fontSize:26,fontWeight:'800',marginTop:14}}>SecurRoute</Text><Text style={{color:'#ffab00',marginTop:4,fontWeight:'600',fontSize:13}}>{t.tag}</Text></View>
+   <Text style={{color:'#fff',fontSize:26,fontWeight:'800',marginTop:14}}>SecurRoute</Text><Text style={{color:'#ffab00',marginTop:4,fontWeight:'600',fontSize:13}}>{t.tag}</Text><Text style={{color:'#ffffffa0',marginTop:2,fontWeight:'600',fontSize:12}}>{t.byNexus}</Text></View>
   <View style={[st.card,{marginHorizontal:20,marginTop:-44,padding:20,elevation:6}]}><Text style={[st.tx,{fontSize:20,fontWeight:'800',marginBottom:14}]}>{t.login}</Text>
    <TextInput style={st.in} placeholder={t.email} placeholderTextColor={c.mu} autoCapitalize="none" keyboardType="email-address" onChangeText={v=>setF({...f,email:v})}/>
    <TextInput style={st.in} placeholder={t.pw} placeholderTextColor={c.mu} secureTextEntry onChangeText={v=>setF({...f,password:v})}/>
    {!!err&&<Text style={{color:'#dc2626',marginBottom:10}}>{err}</Text>}
-   <TouchableOpacity style={st.btn} onPress={login}><Text style={{color:'#fff',fontWeight:'700',fontSize:16}}>{t.login}</Text></TouchableOpacity></View></ScrollView>;
+   <TouchableOpacity style={st.btn} onPress={login}><Text style={{color:'#fff',fontWeight:'700',fontSize:16}}>{t.login}</Text></TouchableOpacity></View>
+  <View style={{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:6,marginTop:20,opacity:.6}}><Image source={require('./assets/nexus-logo.png')} style={{width:16,height:16}} resizeMode="contain"/><Text style={{color:c.mu,fontSize:12,fontWeight:'600'}}>{t.footer}</Text></View></ScrollView>;
  return<View style={{flex:1,backgroundColor:c.bg}}>{Top}
   <View style={{flexDirection:'row',alignItems:'center',padding:8,paddingLeft:14,backgroundColor:online?'#16a34a':'#f59e0b'}}>
    <Text style={{flex:1,color:'#fff',fontWeight:'600'}}>{online?t.on:t.off}{queue.length?` · ${queue.length} ${t.pend}`:''} · {t.last}: {lastSync?new Date(lastSync).toLocaleTimeString():t.never}</Text>

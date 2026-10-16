@@ -25,6 +25,18 @@ eas build --platform android --profile preview
 Offline: the vehicle registry is cached on-device and refreshes automatically while online, retrying every 20s.
 Checks made offline queue up, show a manual "Sync now" button, and auto-sync as soon as a connection returns.
 
+## Branding: Nexus Tech Labs (parent company)
+SecurRoute remains the product name everywhere. "Nexus Tech Labs" appears as the parent/developer
+brand in these places only, so the field-agent screens stay uncluttered:
+- Web: browser tab title, the login/reset brand panel, a small byline next to the logo in the top bar,
+  and a footer ("SecurRoute · Developed by Nexus Tech Labs") on every signed-in page.
+- Mobile: the welcome/login screen only (tagline byline + a small mark beneath the sign-in button).
+  The scanning screen, result cards and history were intentionally left untouched.
+Assets: `web/public/nexus-logo.png` and `mobile/assets/nexus-logo.png` (the emblem you supplied).
+Outstanding: the native splash screen (shown for a second before the app's JS loads) is a single
+static image with no text support without ejecting/expo-splash-screen customization, so it still
+shows the SecurRoute mark only; the Nexus credit appears right after, on the welcome screen.
+
 ## Sample data for a pitch
 cd backend
 npm run seed-demo   -> 60 sample vehicles + 1,600 checks over 14 days

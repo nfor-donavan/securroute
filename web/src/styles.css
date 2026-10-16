@@ -54,7 +54,7 @@ select{padding:12px;border-radius:12px;border:1px solid var(--bd);background:var
 .brand:before{content:'';position:absolute;right:-120px;top:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(#ffab0040,transparent 70%)}
 .bc{position:relative;margin:auto 0}.brand small{opacity:.6;position:relative}
 .logobox{width:112px;height:112px;border-radius:30px;background:#fff;display:grid;place-items:center;box-shadow:0 18px 50px #0006;margin-bottom:26px}.logobox img{width:84px;height:84px;object-fit:contain}
-.brand h1{font-size:40px;margin:0}.tg{color:#ffab00;font-weight:600;margin:6px 0 28px}
+.brand h1{font-size:40px;margin:0}.tg{color:#ffab00;font-weight:600;margin:6px 0 2px}
 .brand ul{list-style:none;padding:0;margin:0;display:grid;gap:12px;font-size:16px}.brand li{opacity:.92}
 .fw{display:flex;flex-direction:column;padding:20px 28px;background:var(--bg)}.fw .ctl{display:flex;gap:8px;justify-content:flex-end}
 .fcard{margin:auto;width:min(400px,100%);display:grid;gap:14px}.fcard h2{font-size:28px;margin:0}.sub2{color:var(--mu);margin:-8px 0 6px}
@@ -62,3 +62,12 @@ select{padding:12px;border-radius:12px;border:1px solid var(--bd);background:var
 @media(max-width:820px){.auth{grid-template-columns:1fr}.brand{padding:22px 24px}.bc{margin:0;display:flex;align-items:center;gap:16px}.logobox{width:68px;height:68px;border-radius:20px;margin:0;flex:none}.logobox img{width:50px;height:50px}
 .brand h1{font-size:24px}.tg{margin:2px 0 0;font-size:13px}.brand ul,.brand small{display:none}.fw{padding:16px 20px 30px}}
 .btn:disabled{opacity:.6;cursor:default}
+
+/* Nexus Tech Labs parent-brand treatment */
+.byline{color:var(--mu);font-size:12px;font-weight:600;margin-left:4px;white-space:nowrap}
+.nxline{color:#ffffffb0;font-size:12px;font-weight:600;margin:0 0 28px}
+.nxfooter{display:flex;align-items:center;gap:8px;position:relative;opacity:.75}
+.nxfooter img{width:18px;height:18px;object-fit:contain;border-radius:4px;background:#fff;padding:1px}
+.appfoot{display:flex;align-items:center;justify-content:center;gap:8px;max-width:1200px;margin:10px auto 26px;padding:14px;color:var(--mu);font-size:13px}
+.appfoot img{width:18px;height:18px;object-fit:contain;border-radius:4px}
+@media(max-width:820px){.byline{display:none}}
